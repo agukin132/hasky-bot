@@ -131,4 +131,26 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+
+  import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import os
+
+# Это крошечный сервер, который просто отвечает "ОК" для Railway
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'OK')
+
+# Запускаем его в фоне
+def run_health_check():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    server.serve_forever()
+
+# Стартуем фоновый поток сразу при запуске
+threading.Thread(target=run_health_check, daemon=True).start()
+  
+asyncio.run(main())
